@@ -16,43 +16,121 @@ from dash.dependencies import Input, Output
 import numpy as np
 
 
-app = dash.Dash(__name__)
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+app = dash.Dash(__name__,external_stylesheets=external_stylesheets)
+
+colors = {
+    'background': '#111111',
+    'text': '#7FDBFF'
+}
+
 
 
 df = pd.read_csv("./excel/caste.csv")
 state_unique=df["state_name"].unique()
 
-group_by_state=df.groupby("state_name",as_index=False).sum()
+#for india 
+state_group=df.groupby(["year"],as_index=False).sum()
+state_group.drop(["is_state"],axis=1)
+
+total_prisonerstate=state_group["convicts"]+state_group["under_trial"]+state_group["detenues"]+state_group["others"]
+total_prisonerstate
+ 
+data = [go.Bar(x=list(state_group["year"]), y = list(total_prisonerstate))]
+yearwise_india = go.Figure(data=data)
+
+yearwise_india .update_traces(marker_color='rgb(158,202,225)', marker_line_color='rgb(8,48,107)',
+                  marker_line_width=1.5, opacity=0.6)
+yearwise_india .update_layout(plot_bgcolor=colors['background'],paper_bgcolor=colors['background'],font_color=colors['text'],title_text='Prisoner vs Year')
 
 
-#print(state_unique)
-
-group_by_state=df.groupby("state_name",as_index=False).sum()
-
-
-fig_state_wise_convicts=px.bar(group_by_state, x='state_name', y="convicts",
-             hover_data=['convicts', 'under_trial','detenues','others'], 
-             labels={'State wise distributuiion'}, height=500)
-
-fig_state_wise_undertrails=px.bar(group_by_state, x='state_name', y="under_trial",
-             hover_data=['convicts', 'under_trial','detenues','others'], 
-             labels={'State wise distributuiion'}, height=500)
-
-fig_state_wise_detainee=px.bar(group_by_state, x='state_name', y="detenues",
-             hover_data=['convicts', 'under_trial','detenues','others'], 
-             labels={'State wise distributuiion'}, height=500)
+year_group=df.groupby(["state_name"],as_index=False).sum()
+year_group.drop(["is_state","year"],axis=1)
 
 
-group_by_state_total=group_by_state["convicts"]+group_by_state["under_trial"]+group_by_state["detenues"]+group_by_state["others"]
-group_by_state_total
-fig = px.pie(df, values='tip', names='day')
-fig.show()
+total_prisoneryear=year_group["convicts"]+year_group["under_trial"]+year_group["detenues"]+year_group["others"]
+total_prisoneryear=np.log(list(total_prisoneryear))
+
+data_state = [go.Bar(x=list(year_group["state_name"]), y = list(total_prisoneryear))]
+statewise_india = go.Figure(data=data_state)
+
+statewise_india .update_traces(marker_color='rgb(158,202,225)', marker_line_color='rgb(8,48,107)',
+                  marker_line_width=1.5, opacity=0.6)
+statewise_india.update_layout(plot_bgcolor=colors['background'],paper_bgcolor=colors['background'],font_color=colors['text'],title_text='Prisoner vs State (log transformed)')
+
+
+caste_group=df.groupby(["caste"],as_index=False).sum()
+caste_group.drop(["is_state",'year'],axis=1)
+
+caste_total=caste_group["convicts"]+caste_group["under_trial"]+caste_group["detenues"]+caste_group["others"]
+caste_total=list(caste_total)
+caste_total=list(caste_total)
+
+data_caste_india = [go.Bar(x=list(caste_group["caste"]), y = list(caste_total))]
+caste_india = go.Figure(data=data_caste_india)
+
+caste_india .update_traces(marker_color='rgb(158,202,225)', marker_line_color='rgb(8,48,107)',
+                  marker_line_width=1.5, opacity=0.6)
+caste_india.update_layout(plot_bgcolor=colors['background'],paper_bgcolor=colors['background'],font_color=colors['text'],title_text='Prisoner vs Caste')
+
+gender_group=df.groupby(["gender"],as_index=False).sum()
+gender_group.drop(["is_state",'year'],axis=1)
+
+convicts = go.Bar(
+   x = list(gender_group["gender"]),
+   y = list(gender_group["convicts"]),
+   name = 'Convicts'
+)
+
+under_trial = go.Bar(
+   x = list(gender_group["gender"]),
+   y = list(gender_group["under_trial"]),
+   name = 'Under_trial'
+)
+
+detenues = go.Bar(
+   x = list(gender_group["gender"]),
+   y = list(gender_group["detenues"]),
+   name = 'Detenues'
+)
+
+others = go.Bar(
+   x = list(gender_group["gender"]),
+   y = list(gender_group["others"]),
+   name = 'others'
+)
+
+data_gender = [convicts, under_trial,detenues,others]
+
+layout = go.Layout(barmode = 'group')
+gender_staced = go.Figure(data = data_gender, layout = layout)
+
+gender_staced .update_traces( marker_line_color='rgb(8,48,107)',
+                  marker_line_width=1.5, opacity=0.8)
+gender_staced.update_layout(plot_bgcolor=colors['background'],paper_bgcolor=colors['background'],font_color=colors['text'],title_text='Prisoner vs Gender')
 
 app.layout = html.Div([
    
-    html.H1("Prison Data Overview with Dash and Plotly", style={'text-align': 'center'}),
+    html.H1("Prison Data of Indian Subcontenent", style={'text-align': 'center','font-weight': '400'}),
    
-    dcc.Dropdown(id="state_name",
+    #India graph
+    html.Div([
+    
+
+    dcc.Graph(id='Year wise graph', figure=yearwise_india),
+  #caste_india
+    dcc.Graph(id='State wise graph', figure=statewise_india),
+    #
+    dcc.Graph(id='Caste wise graph', figure=caste_india),
+      #gender_staced
+    dcc.Graph(id='Gender wise', figure=gender_staced),  
+ ]),
+    html.Div([
+        
+       html.H1("Prison Data Statewise", style={'text-align': 'center','font-weight': '400'}),
+        
+        dcc.Dropdown(id="state_name",
                  options=[
                      {"label": str(state_unique[0]), "value": state_unique[0]},
                       {"label": str(state_unique[1]), "value": state_unique[1]},
@@ -93,62 +171,23 @@ app.layout = html.Div([
                                                           value=state_unique[0],
                                                           style={'width': "40%"}
                                                           ),
-   
+        ]),
     
-    
-    
-    
-    
-    # for india as whole
     html.Br(),
+    
     html.Div([
         
-     html.H2("Prison Data Overview Indian-Subcontinent", style={'text-align': 'center'}),   
+    dcc.Graph(id='A', figure={}),
     
-     dcc.Graph(
-        id='convicts',
-        figure=fig_state_wise_convicts
-    ),
+    #dcc.Graph(id='B', figure=yearwise_india),
     
-    dcc.Graph(
-        id='under_trails',
-        figure=fig_state_wise_undertrails
-    ),
-  
-     dcc.Graph(
-        id='detainee',
-        figure=fig_state_wise_detainee
-    ),
+], style={'columnCount': 2})
+    
      
-     ]),   
-        
-        
-         
-html.Div([
-        
-     html.H2("Prison Data Overview Indian-Subcontinent", style={'text-align': 'center'}),   
     
-     dcc.Graph(
-        id='convicts',
-        figure=fig_state_wise_convicts
-    ),
     
-    dcc.Graph(
-        id='under_trails',
-        figure=fig_state_wise_undertrails
-    ),
-  
-     dcc.Graph(
-        id='detainee',
-        figure=fig_state_wise_detainee
-    ),
-     
-     ]),   
 
-
-
-])
-
+]) 
 
 
 
