@@ -6,7 +6,7 @@ Created on Thu Apr  1 23:11:28 2021
 """
 
 import pandas as pd
-import plotly.express as px  # (version 4.7.0)
+
 import plotly.graph_objects as go
 
 import dash  # (version 1.12.0) pip install dash
@@ -27,7 +27,7 @@ colors = {
 
 
 
-df = pd.read_csv("./excel/caste.csv")
+df = pd.read_csv("./excel/Caste.csv")
 state_unique=df["state_name"].unique()
 
 #for india 
@@ -109,22 +109,6 @@ gender_staced = go.Figure(data = data_gender, layout = layout)
 gender_staced .update_traces( marker_line_color='rgb(8,48,107)',
                   marker_line_width=1.5, opacity=0.8)
 gender_staced.update_layout(plot_bgcolor=colors['background'],paper_bgcolor=colors['background'],font_color=colors['text'],title_text='Prisoner vs Gender')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
